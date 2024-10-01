@@ -48,12 +48,6 @@ resource "kubernetes_config_map_v1" "api_config" {
     name      = "api-config"
     namespace = "default"
   }
-
-  data = {
-    DBServer = var.db_server
-    DBPort   = var.db_port
-    Database = var.db_name
-  }
 }
 
 
@@ -61,11 +55,6 @@ resource "kubernetes_secret" "api_secrets" {
   metadata {
     name      = "api-secrets"
     namespace = "default"
-  }
-
-  data = {
-    DBUser     = base64encode(var.db_user)
-    DBPassword = base64encode(var.db_password)
   }
 
   type = "Opaque"
