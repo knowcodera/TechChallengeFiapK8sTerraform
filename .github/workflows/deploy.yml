@@ -36,6 +36,9 @@ jobs:
       - name: Terraform Init
         run: terraform init
 
+      - name: Terraform Import Resources
+        run: terraform import azurerm_resource_group.rg /subscriptions/${{ env.ARM_SUBSCRIPTION_ID }}/resourceGroups/MyResourceGroup || true 
+
       # Valida o código Terraform
       - name: Terraform Validate
         run: terraform validate
