@@ -79,20 +79,21 @@ jobs:
       # Aplicar ConfigMap e Secret
       - name: Apply ConfigMap and Secret
         run: |
-          kubectl apply -f Kubernets/apistore/configmap-api.yaml
-          kubectl apply -f Kubernets/apistore/secret-api.yaml
+          kubectl apply -f ./Kubernets/apistore/configmap-store-api.yaml
+          kubectl apply -f ./Kubernets/apistore/secret-store-api.yaml
 
       # Aplicar deployment e service para o store-db
       - name: Apply Store API Deployment and Service
         run: |
-          kubectl apply -f Kubernets/apistore/deployment-store-api.yaml
-          kubectl apply -f Kubernets/apistore/svc-store-api.yaml
+          kubectl apply -f ./Kubernets/apistore/deployment-store-api.yaml
+          kubectl apply -f ./Kubernets/apistore/svc-store-api.yaml
+          kubectl apply -f ./Kubernets/apistore/hpa-store-api.yaml
 
       # Aplicar deployment e service para o store-api
       - name: Apply Payment API Deployment and Service
         run: |
-          kubectl apply -f Kubernets/apipayment/deployment-store-apipayment.yaml
-          kubectl apply -f Kubernets/apipayment/svc-store-apipayment.yaml
+          kubectl apply -f ./Kubernets/apipayment/deployment-store-apipayment.yaml
+          kubectl apply -f ./Kubernets/apipayment/svc-store-apipayment.yaml
 
       # Atualizar a imagem da Store API
       - name: Update Store API Deployment
@@ -105,7 +106,3 @@ jobs:
         run: |
           kubectl set image deployment/apipayment apipayment=${{ env.ACR_LOGIN_SERVER }}/payment:dev --namespace default
           kubectl rollout status deployment/apipayment --namespace default --timeout=60s
-
-      # Aplicar HPA
-      - name: Apply Horizontal Pod Autoscaler
-        run: kubectl apply -f Kubernets/apistore/hpa-api.yaml
