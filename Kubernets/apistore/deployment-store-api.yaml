@@ -18,6 +18,11 @@ spec:
       - name: api
         image: mycontainerregistrytechchallenge.azurecr.io/store:dev
         env:
+        - name: DefaultConnection
+          valueFrom:
+            secretKeyRef:
+              name: api-secrets
+              key: DefaultConnection
         - name: DBServer
           valueFrom:
             configMapKeyRef:
