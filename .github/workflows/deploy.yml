@@ -13,6 +13,7 @@ env:
   ARM_CLIENT_SECRET: ${{ secrets.ARM_CLIENT_SECRET }}
   ARM_SUBSCRIPTION_ID: ${{ secrets.ARM_SUBSCRIPTION_ID }}
   ARM_TENANT_ID: ${{ secrets.ARM_TENANT_ID }}
+  ACR_LOGIN_SERVER: ${{ secrets.ARM_LOGIN_SERVER }}
 
 jobs:
   terraform:
@@ -38,6 +39,12 @@ jobs:
 
       - name: Terraform Import Resources
         run: terraform import azurerm_resource_group.rg /subscriptions/${{ env.ARM_SUBSCRIPTION_ID }}/resourceGroups/MyResourceGroup || true 
+     
+      - name: Import AKS Cluster
+        run: terraform import azurerm_kubernetes_cluster.aks /subscriptions/${{ secrets.ARM_SUBSCRIPTION_ID }}/resourceGroups/MyResourceGroup/providers/Microsoft.ContainerService/managedClusters/myAKSCluster || true
+        
+      - name: Import ACR
+        run: terraform import azurerm_container_registry.acr /subscriptions/${{ secrets.ARM_SUBSCRIPTION_ID }}/resourceGroups/MyResourceGroup/providers/Microsoft.ContainerRegistry/registries/myContainerRegistryTechChallenge || true
 
       # Valida o código Terraform
       - name: Terraform Validate
@@ -60,7 +67,6 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
 
-   
       - name: Azure Login
         uses: azure/login@v2
         with:
@@ -70,26 +76,33 @@ jobs:
       - name: Get AKS Credentials
         run: az aks get-credentials --resource-group MyResourceGroup --name myAKSCluster --overwrite-existing
 
-      # Aplicar deployment e service para o store-db
-      - name: Apply Store DB Deployment and Service
+      # Aplicar ConfigMap e Secret
+      - name: Apply ConfigMap and Secret
         run: |
-          kubectl apply -f deployment-store-db.yaml
-          kubectl apply -f svc-store-db.yaml
+          kubectl apply -f ./Kubernets/apistore/configmap-store-api.yaml
+          kubectl apply -f ./Kubernets/apistore/secret-store-api.yaml
 
-      # Aplicar deployment e service para o store-api
+      # Aplicar deployment e service para o store-db
       - name: Apply Store API Deployment and Service
         run: |
-          kubectl apply -f deployment-store-api.yaml
-          kubectl apply -f svc-store-api.yaml
+          kubectl apply -f ./Kubernets/apistore/deployment-store-api.yaml
+          kubectl apply -f ./Kubernets/apistore/svc-store-api.yaml
+          kubectl apply -f ./Kubernets/apistore/hpa-store-api.yaml
+
+      # Aplicar deployment e service para o store-api
+      - name: Apply Payment API Deployment and Service
+        run: |
+          kubectl apply -f ./Kubernets/apipayment/deployment-store-apipayment.yaml
+          kubectl apply -f ./Kubernets/apipayment/svc-store-apipayment.yaml
 
       # Atualizar a imagem da Store API
       - name: Update Store API Deployment
         run: |
           kubectl set image deployment/api api=${{ env.ACR_LOGIN_SERVER }}/store:dev --namespace default
-          kubectl rollout status deployment/api --namespace default --timeout=30s
+          kubectl rollout status deployment/api --namespace default --timeout=60s
 
       # Atualizar a imagem da Payment API
       - name: Update Payment API Deployment
         run: |
           kubectl set image deployment/apipayment apipayment=${{ env.ACR_LOGIN_SERVER }}/payment:dev --namespace default
-          kubectl rollout status deployment/apipayment --namespace default --timeout=30s
+          kubectl rollout status deployment/apipayment --namespace default --timeout=60s
