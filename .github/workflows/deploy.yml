@@ -1,56 +1,86 @@
-name: Build and Deploy
+name: Terraform Infrastructure CI/CD
 
 on:
   push:
     branches:
       - main
+  pull_request:
+    branches:
+      - main
 
 jobs:
-  build-and-deploy:
+  terraform:
     runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
 
     steps:
-    - name: Checkout código
-      uses: actions/checkout@v3
+      # Checkout do repositório
+      - name: Checkout code
+        uses: actions/checkout@v3
 
-    - name: Configurar Docker Buildx
-      uses: docker/setup-buildx-action@v2
+      # Configuração do Terraform
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v2
+        with:
+          terraform_version: 1.9.6
 
-    - name: Login no Azure Container Registry
-      uses: docker/login-action@v2
-      with:
-        registry: mycontainerregistrytechchallenge.azurecr.io
-        username: ${{ secrets.ACR_USERNAME }}
-        password: ${{ secrets.ACR_PASSWORD }}
+      # Inicializa o Terraform
+      - name: Terraform Init
+        run: terraform init
 
-    - name: Build e Push da imagem 'store'
-      uses: docker/build-push-action@v4
-      with:
-        context: ./store
-        push: true
-        tags: mycontainerregistrytechchallenge.azurecr.io/store:dev
+      # Valida o código Terraform
+      - name: Terraform Validate
+        run: terraform validate
 
-    - name: Build e Push da imagem 'payment'
-      uses: docker/build-push-action@v4
-      with:
-        context: ./payment
-        push: true
-        tags: mycontainerregistrytechchallenge.azurecr.io/payment:dev
+      # Executa o Terraform Plan para ver as mudanças
+      - name: Terraform Plan
+        run: terraform plan
 
-    - name: Login no Azure
-      uses: azure/login@v2
-      with:
-        client-id: ${{ secrets.AZURE_CLIENTID }}
-        tenant-id: ${{ secrets.AZURE_TENANTID }}
-        subscription-id: ${{ secrets.AZURE_SUBSCRIPTIONID }}  
+      # Aplica as mudanças do Terraform com aprovação automática
+      - name: Terraform Apply
+        run: terraform apply -auto-approve
 
-    - name: Configurar kubectl
-      uses: azure/setup-kubectl@v3
-      with:
-        version: 'latest'
+  update-kubernetes:
+    runs-on: ubuntu-latest
+    needs: terraform  # Esta etapa só é executada se o Terraform aplicar com sucesso
 
-    - name: Obter credenciais do AKS
-      run: az aks get-credentials --resource-group myResourceGroup --name myAKSCluster --overwrite-existing
+    steps:
+      # Checkout do repositório para garantir que os manifests de Kubernetes estão disponíveis
+      - name: Checkout code
+        uses: actions/checkout@v3
 
-    - name: Aplicar manifests no Kubernetes
-      run: kubectl apply -f k8s/
+   
+      - name: Azure Login
+        uses: azure/login@v2
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      # Obter credenciais do AKS
+      - name: Get AKS Credentials
+        run: az aks get-credentials --resource-group MyResourceGroup --name myAKSCluster --overwrite-existing
+
+      # Aplicar deployment e service para o store-db
+      - name: Apply Store DB Deployment and Service
+        run: |
+          kubectl apply -f deployment-store-db.yaml
+          kubectl apply -f svc-store-db.yaml
+
+      # Aplicar deployment e service para o store-api
+      - name: Apply Store API Deployment and Service
+        run: |
+          kubectl apply -f deployment-store-api.yaml
+          kubectl apply -f svc-store-api.yaml
+
+      # Atualizar a imagem da Store API
+      - name: Update Store API Deployment
+        run: |
+          kubectl set image deployment/api api=${{ env.ACR_LOGIN_SERVER }}/store:dev --namespace default
+          kubectl rollout status deployment/api --namespace default --timeout=300s
+
+      # Atualizar a imagem da Payment API
+      - name: Update Payment API Deployment
+        run: |
+          kubectl set image deployment/apipayment apipayment=${{ env.ACR_LOGIN_SERVER }}/payment:dev --namespace default
+          kubectl rollout status deployment/apipayment --namespace default --timeout=300s
