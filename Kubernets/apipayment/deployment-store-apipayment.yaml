@@ -1,0 +1,22 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: apipayment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: apipayment
+  template:
+    metadata:
+      labels:
+        app: apipayment
+    spec:
+      imagePullSecrets:
+      - name: acr-secret
+      containers:
+      - name: apipayment
+        image: mycontainerregistrytechchallenge.azurecr.io/payment:dev
+        ports:
+        - containerPort: 8480
+        - containerPort: 8481

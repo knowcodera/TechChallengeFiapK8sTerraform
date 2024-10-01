@@ -1,0 +1,17 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: apipayment
+spec:
+  selector:
+    app: apipayment
+  ports:
+    - name: http
+      protocol: TCP
+      port: 8480
+      targetPort: 8480
+    - name: debug
+      protocol: TCP
+      port: 8481
+      targetPort: 8481
+  type: LoadBalancer

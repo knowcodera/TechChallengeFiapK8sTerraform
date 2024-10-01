@@ -1,0 +1,48 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: api
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: api
+  template:
+    metadata:
+      labels:
+        app: api
+    spec:
+      imagePullSecrets:
+      - name: acr-secret
+      containers:
+      - name: api
+        image: mycontainerregistrytechchallenge.azurecr.io/store:dev
+        env:
+        - name: DBServer
+          valueFrom:
+            configMapKeyRef:
+              name: api-config
+              key: DBServer
+        - name: DBPort
+          valueFrom:
+            configMapKeyRef:
+              name: api-config
+              key: DBPort
+        - name: Database
+          valueFrom:
+            configMapKeyRef:
+              name: api-config
+              key: Database
+        - name: DBUser
+          valueFrom:
+            secretKeyRef:
+              name: api-secrets  
+              key: DBUser
+        - name: DBPassword
+          valueFrom:
+            secretKeyRef:
+              name: api-secrets
+              key: DBPassword
+        ports:
+        - containerPort: 8080
+        - containerPort: 8081
