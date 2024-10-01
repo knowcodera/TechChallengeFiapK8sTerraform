@@ -41,10 +41,10 @@ jobs:
         run: terraform import azurerm_resource_group.rg /subscriptions/${{ env.ARM_SUBSCRIPTION_ID }}/resourceGroups/MyResourceGroup || true 
      
       - name: Import AKS Cluster
-        run: terraform import azurerm_kubernetes_cluster.aks /subscriptions/${{ secrets.AZURE_SUBSCRIPTION_ID }}/resourceGroups/MyResourceGroup/providers/Microsoft.ContainerService/managedClusters/myAKSCluster || true
+        run: terraform import azurerm_kubernetes_cluster.aks /subscriptions/${{ secrets.ARM_SUBSCRIPTION_ID }}/resourceGroups/MyResourceGroup/providers/Microsoft.ContainerService/managedClusters/myAKSCluster || true
         
       - name: Import ACR
-        run: terraform import azurerm_container_registry.acr /subscriptions/${{ secrets.AZURE_SUBSCRIPTION_ID }}/resourceGroups/MyResourceGroup/providers/Microsoft.ContainerRegistry/registries/myContainerRegistryTechChallenge || true
+        run: terraform import azurerm_container_registry.acr /subscriptions/${{ secrets.ARM_SUBSCRIPTION_ID }}/resourceGroups/MyResourceGroup/providers/Microsoft.ContainerRegistry/registries/myContainerRegistryTechChallenge || true
 
       # Valida o código Terraform
       - name: Terraform Validate
