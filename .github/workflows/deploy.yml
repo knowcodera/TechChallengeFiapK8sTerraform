@@ -79,20 +79,20 @@ jobs:
       # Aplicar ConfigMap e Secret
       - name: Apply ConfigMap and Secret
         run: |
-          kubectl apply -f configmap-api.yaml
-          kubectl apply -f secret-api.yaml
+          kubectl apply -f Kubernets/apistore/configmap-api.yaml
+          kubectl apply -f Kubernets/apistore/secret-api.yaml
 
       # Aplicar deployment e service para o store-db
       - name: Apply Store API Deployment and Service
         run: |
-          kubectl apply -f deployment-store-api.yaml
-          kubectl apply -f svc-store-api.yaml
+          kubectl apply -f Kubernets/apistore/deployment-store-api.yaml
+          kubectl apply -f Kubernets/apistore/svc-store-api.yaml
 
       # Aplicar deployment e service para o store-api
       - name: Apply Payment API Deployment and Service
         run: |
-          kubectl apply -f deployment-store-apipayment.yaml
-          kubectl apply -f svc-store-apipayment.yaml
+          kubectl apply -f Kubernets/apipayment/deployment-store-apipayment.yaml
+          kubectl apply -f Kubernets/apipayment/svc-store-apipayment.yaml
 
       # Atualizar a imagem da Store API
       - name: Update Store API Deployment
@@ -108,4 +108,4 @@ jobs:
 
       # Aplicar HPA
       - name: Apply Horizontal Pod Autoscaler
-        run: kubectl apply -f hpa-api.yaml
+        run: kubectl apply -f Kubernets/apistore/hpa-api.yaml
