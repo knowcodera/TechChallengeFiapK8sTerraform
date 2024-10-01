@@ -4,22 +4,11 @@ terraform {
       source  = "hashicorp/azurerm"
       version = "~> 4.0"
     }
-    kubernetes = {
-      source = "hashicorp/kubernetes"
-      version = "~> 2.0"
-    }
   }
 }
 
 provider "azurerm" {
   features {}
-}
-
-provider "kubernetes" {
-  host                   = azurerm_kubernetes_cluster.aks.kube_config[0].host
-  client_certificate     = base64decode(azurerm_kubernetes_cluster.aks.kube_config[0].client_certificate)
-  client_key             = base64decode(azurerm_kubernetes_cluster.aks.kube_config[0].client_key)
-  cluster_ca_certificate = base64decode(azurerm_kubernetes_cluster.aks.kube_config[0].cluster_ca_certificate)
 }
 
 resource "azurerm_resource_group" "rg" {
@@ -52,42 +41,3 @@ resource "azurerm_container_registry" "acr" {
   sku                 = "Basic"
   admin_enabled       = true
 }
-
-
-resource "kubernetes_config_map_v1" "api_config" {
-  metadata {
-    name      = "api-config"
-    namespace = "default"
-  }
-}
-
-
-resource "kubernetes_secret" "api_secrets" {
-  metadata {
-    name      = "api-secrets"
-    namespace = "default"
-  }
-
-  type = "Opaque"
-}
-
-resource "kubernetes_horizontal_pod_autoscaler" "api_hpa" {
-  metadata {
-    name      = "api-hpa"
-    namespace = "default"
-  }
-
-  spec {
-    max_replicas = 10
-    min_replicas = 2
-
-    scale_target_ref {
-      kind        = "Deployment"
-      name        = "api"
-      api_version = "apps/v1"
-    }
-
-    target_cpu_utilization_percentage = 50
-  }
-}
-
