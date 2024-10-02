@@ -99,10 +99,10 @@ jobs:
       - name: Update Store API Deployment
         run: |
           kubectl set image deployment/api api=${{ env.ACR_LOGIN_SERVER }}/store:dev --namespace default
-          kubectl rollout status deployment/api --namespace default --timeout=60s
+          kubectl rollout status deployment/api --namespace default --timeout=200s
 
       # Atualizar a imagem da Payment API
       - name: Update Payment API Deployment
         run: |
           kubectl set image deployment/apipayment apipayment=${{ env.ACR_LOGIN_SERVER }}/payment:dev --namespace default
-          kubectl rollout status deployment/apipayment --namespace default --timeout=60s
+          kubectl rollout status deployment/apipayment --namespace default --timeout=200s
