@@ -23,31 +23,6 @@ spec:
             secretKeyRef:
               name: api-secrets
               key: DefaultConnection
-        - name: DBServer
-          valueFrom:
-            configMapKeyRef:
-              name: api-config
-              key: DBServer
-        - name: DBPort
-          valueFrom:
-            configMapKeyRef:
-              name: api-config
-              key: DBPort
-        - name: Database
-          valueFrom:
-            configMapKeyRef:
-              name: api-config
-              key: Database
-        - name: DBUser
-          valueFrom:
-            secretKeyRef:
-              name: api-secrets  
-              key: DBUser
-        - name: DBPassword
-          valueFrom:
-            secretKeyRef:
-              name: api-secrets
-              key: DBPassword
         ports:
         - containerPort: 8080
         - containerPort: 8081
